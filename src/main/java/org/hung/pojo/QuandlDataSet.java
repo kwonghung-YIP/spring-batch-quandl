@@ -12,10 +12,10 @@ import lombok.Data;
 @Data
 public class QuandlDataSet<T> {
 	
-	private DataSet dataset;
+	private DataSet<T> dataset;
 	
 	@Data
-	public class DataSet {
+	public static class DataSet<T> {
 	
 		@JsonProperty("dataset_code")
 		private String code;

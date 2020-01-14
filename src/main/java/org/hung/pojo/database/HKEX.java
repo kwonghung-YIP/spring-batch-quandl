@@ -2,35 +2,41 @@ package org.hung.pojo.database;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import lombok.Data;
 
 @Data
+@JsonFormat(shape = Shape.ARRAY)
+@JsonPropertyOrder({"date","nominalPrice","netChange","changePct","bid","ask","pe","high","low","prevClose","shareVolume","turnover","lotSize"})
 public class HKEX {
 
 	private LocalDate date;
 	
-	private Float nominalPrice;
+	private Double nominalPrice;
 	
-	private Float netChange;
+	private Double netChange;
 	
-	private Float changePct;
+	private Double changePct;
 	
-	private Float bid;
+	private Double bid;
 	
-	private Float ask;
+	private Double ask;
 	
-	private Float pe;
+	private Double pe;
 	
-	private Float high;
+	private Double high;
 	
-	private Float low;
+	private Double low;
 	
-	private Float prevClose;
+	private Double prevClose;
 	
-	private Float shareVolume;
+	private Double shareVolume;
 	
-	private Float turnover;
+	private Double turnover;
 	
-	private Float lotSize;
+	private Double lotSize;
 	
 }

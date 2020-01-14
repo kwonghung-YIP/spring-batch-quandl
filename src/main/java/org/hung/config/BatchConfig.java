@@ -3,6 +3,7 @@ package org.hung.config;
 
 
 import org.hung.batch.QuandlDatasetItemReader;
+import org.hung.pojo.database.HKEX;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
@@ -25,13 +26,13 @@ public class BatchConfig {
 
 	@Bean
 	//@StepScope
-	public ItemReader<String> reader(ObjectMapper mapper, RestTemplateBuilder builder) {
-		return new QuandlDatasetItemReader<String>(mapper, builder);
+	public ItemReader<HKEX> reader(ObjectMapper mapper, RestTemplateBuilder builder) {
+		return new QuandlDatasetItemReader<HKEX>(mapper, builder);
 	}
 	
 	@Bean
 	@StepScope
-	public ItemProcessor<String,String> filter() {
+	public ItemProcessor<HKEX,String> filter() {
 		return item -> {
 			return null;
 		};
