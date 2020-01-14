@@ -1,0 +1,14 @@
+{
+	"data": [
+		{
+			"firstName" : "Tai Man",
+			"lastName" : "Chan",
+			"email" : "taiman.chan@abc.com"
+		},
+		{
+			"firstName" : "Tai Sin",
+			"lastName" : "Wong",
+			"email" : "taisin.wong@abc.com"
+		}
+	]
+}
