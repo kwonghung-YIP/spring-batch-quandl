@@ -21,6 +21,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.core.GenericTypeResolver;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,35 +34,52 @@ public class BatchConfig {
 	@Autowired
 	private RestTemplateBuilder builder;
 	
-	@Bean
-	@StepScope
-	public QuandlDatasetItemReader<HKEX> reader(@Value("#{jobParameters}") Map jobParameters) {
-		QuandlDatasetItemReader<HKEX> reader = new QuandlDatasetItemReader<HKEX>(builder, HKEX.class);
-		reader.setDatabaseCode((String)jobParameters.get("database-code"));
-		reader.setDatasetCode((String)jobParameters.get("dataset-code"));
-		return reader;
+	public abstract class QuandlDatasetConfig<T> {
+
+		public QuandlDatasetItemReader<T> reader(Map jobParameters) {
+			Class clazz = (Class<T>)GenericTypeResolver.resolveTypeArgument(getClass(),QuandlDatasetConfig.class);
+			
+			QuandlDatasetItemReader<T> reader = new QuandlDatasetItemReader<T>(builder, clazz);
+			reader.setDatabaseCode((String)jobParameters.get("database-code"));
+			reader.setDatasetCode((String)jobParameters.get("dataset-code"));
+			return reader;
+		}
+		
+		public ItemProcessor<T,String> filter() {
+			return item -> {
+				return null;
+			};
+		}
+		
+		public JdbcBatchItemWriter<T> writer(QuandlDataSet<T> dataset, DataSource dataSource) {
+			return new JdbcBatchItemWriterBuilder<T>()
+					.dataSource(dataSource)
+					.beanMapped()
+					.sql("insert into quandl_db_hkex ("
+							+ "stock_code, trade_date, bid, ask, low, high, volume, turnover"
+						+ ") values("
+							+ "'" + dataset.getDataset().getDatasetCode() +"', :date, :bid, :ask, :low, :high, :shareVolume, :turnover"
+						+ ")")
+					.build();
+		}		
 	}
 	
-	@Bean
-	@StepScope
-	public ItemProcessor<HKEX,String> filter() {
-		return item -> {
-			return null;
-		};
+	@Configuration
+	public class HkexConfig extends QuandlDatasetConfig<HKEX> {
+		
+		@Bean("hkex-reader")
+		@StepScope
+		public QuandlDatasetItemReader<HKEX> reader(@Value("#{jobParameters}") Map jobParameters) {
+			return super.reader(jobParameters);
+		}
+			
+		@Bean("hkex-writer")
+		@StepScope
+		public JdbcBatchItemWriter<HKEX> writer(@Value("#{stepExecution}") StepExecution stepExecution, DataSource dataSource) {
+			QuandlDataSet<HKEX> dataset = (QuandlDataSet<HKEX>)stepExecution.getExecutionContext().get("dataset");
+			return super.writer(dataset, dataSource);
+		}
 	}
 	
-	@Bean
-	@StepScope
-	public JdbcBatchItemWriter<HKEX> writer(@Value("#{stepExecution}") StepExecution stepExecution, DataSource dataSource) {
-		QuandlDataSet<HKEX> dataset = (QuandlDataSet<HKEX>)stepExecution.getExecutionContext().get("dataset");
-		return new JdbcBatchItemWriterBuilder<HKEX>()
-				.dataSource(dataSource)
-				.beanMapped()
-				.sql("insert into quandl_db_hkex ("
-						+ "stock_code, trade_date, bid, ask, low, high, volume, turnover"
-					+ ") values("
-						+ "'" + dataset.getDataset().getDatasetCode() +"', :date, :bid, :ask, :low, :high, :shareVolume, :turnover"
-					+ ")")
-				.build();
-	}
+
 }
