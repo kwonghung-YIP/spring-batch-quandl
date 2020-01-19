@@ -6,12 +6,11 @@
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/batch https://www.springframework.org/schema/batch/spring-batch.xsd">
 	
-	<job id="quandl-hkex" xmlns="http://www.springframework.org/schema/batch">
+	<job id="call-quandl-api" xmlns="http://www.springframework.org/schema/batch">
 		<step id="download">
 			<tasklet>
-				<chunk commit-interval="1000"
+				<chunk commit-interval="50"
 					reader="reader"
-					processor="filter"
 					writer="writer">
 					<streams>
 						<stream ref="reader"/>

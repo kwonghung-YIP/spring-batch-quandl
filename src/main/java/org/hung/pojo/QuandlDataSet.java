@@ -18,7 +18,7 @@ public class QuandlDataSet<T> {
 	public static class DataSet<T> {
 	
 		@JsonProperty("dataset_code")
-		private String code;
+		private String datasetCode;
 		
 		@JsonProperty("database_code")
 		private String databaseCode;
@@ -29,8 +29,8 @@ public class QuandlDataSet<T> {
 		private String desc;
 		
 		@JsonProperty("refreshed_at")
-		//@JsonFormat(shape = Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-		private String refreshAt;
+		@JsonFormat(shape = Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+		private LocalDateTime refreshAt;
 		
 		@JsonProperty("column_names")
 		private String[] columnNames;

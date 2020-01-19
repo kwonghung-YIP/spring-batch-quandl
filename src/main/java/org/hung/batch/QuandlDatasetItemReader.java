@@ -1,12 +1,12 @@
 package org.hung.batch;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 import org.hung.pojo.QuandlDataSet;
-import org.hung.pojo.database.HKEX;
 import org.springframework.batch.core.annotation.AfterRead;
+import org.springframework.batch.core.annotation.AfterWrite;
+import org.springframework.batch.core.annotation.BeforeWrite;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
@@ -16,69 +16,67 @@ import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class QuandlDatasetItemReader<T> implements ItemStreamReader<T> {
-	
-	private ObjectMapper mapper;
 	
 	private RestTemplate restTemplate;
 	
 	@Value("${quandl-apikey}")
 	private String apiKey;
 	
-	//private List<String> dummy = new ArrayList<String>(Arrays.asList("A","B","C"));
-	
 	private int currentIndex = 0;
+	
+	private Class<T> datasetType;
+	
+	@Setter
+	private String databaseCode;
+	@Setter
+	private String datasetCode;
 	
 	private QuandlDataSet<T> dataset;
 	
-	public QuandlDatasetItemReader(ObjectMapper mapper, RestTemplateBuilder builder) {
-		this.mapper = mapper;
+	public QuandlDatasetItemReader(RestTemplateBuilder builder, Class<T> datasetType) {
 		this.restTemplate = builder
 				.build();
-	}
+		this.datasetType = datasetType;
+	} 
 
 	@Override
 	public void open(ExecutionContext executionContext) throws ItemStreamException {
 		log.info("open");
 		
-		/*JavaType javaType = mapper.getTypeFactory().constructParametricType(QuandlDataSet.class,HKEX.class);
-		
-		MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(mapper);
-		
-		restTemplate.setMessageConverters(Arrays.asList(converter));*/
-		
 		URI uri =  UriComponentsBuilder
-				.fromHttpUrl("https://www.quandl.com/api/v3/datasets/{database}/{stockCode}.json")
+				.fromHttpUrl("https://www.quandl.com/api/v3/datasets/{databaseCode}/{datasetCode}.json")
 				.queryParam("api_key", this.apiKey)
 				.queryParam("start_date", "2018-01-01")
-				.build("HKEX","00005");
+				.build(this.databaseCode, this.datasetCode);
+				//.build("HKEX","00005");
 		
 		RequestEntity<Void> requestEntity = RequestEntity.get(uri).build();
 		
-		ParameterizedTypeReference<QuandlDataSet<HKEX>> paramTypeRef = new ParameterizedTypeReference<QuandlDataSet<HKEX>>(){};
+		//ParameterizedTypeReference<QuandlDataSet<HKEX>> paramTypeRef = new ParameterizedTypeReference<QuandlDataSet<HKEX>>(){};
 		
-		ResponseEntity<QuandlDataSet<HKEX>> responseEntity = restTemplate.exchange(requestEntity, paramTypeRef);
+		JavaType javaType = TypeFactory.defaultInstance().constructParametricType(QuandlDataSet.class, this.datasetType);
 		
-		this.dataset = (QuandlDataSet<T>)responseEntity.getBody();
+		ParameterizedTypeReference<QuandlDataSet<T>> paramTypeRef = ParameterizedTypeReference.forType(javaType);
+		
+		ResponseEntity<QuandlDataSet<T>> responseEntity = restTemplate.exchange(requestEntity, paramTypeRef);
+		
+		this.dataset = responseEntity.getBody();
 		
 		currentIndex = 0;
+		executionContext.put("dataset",dataset);
 		executionContext.put("currentIndex", currentIndex);
 		
 	}
@@ -103,7 +101,7 @@ public class QuandlDatasetItemReader<T> implements ItemStreamReader<T> {
 
 		if (currentIndex < dataset.getDataset().getData().length) {
 			Object item = dataset.getDataset().getData()[currentIndex++];
-			log.info("{}",item);
+			//log.info("{}",item);
 			return (T)item;
 		}
 		return null;
@@ -111,7 +109,12 @@ public class QuandlDatasetItemReader<T> implements ItemStreamReader<T> {
 	
 	@AfterRead
 	public void afterRead(T item) {
-		log.info("AfterRead:{}",item);
+		//log.info("AfterRead:{}",item);
+	}
+	
+	@AfterWrite
+	public void afterWrite(List<T> items) {
+		//log.info("{}",items);
 	}
 	
 

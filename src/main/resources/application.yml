@@ -1,0 +1,9 @@
+spring:
+  datasource:    platform: hsqldb
+  batch:
+    job:
+      enabled: false
+      
+logging:
+  level:
+    org.springframework.batch: info
