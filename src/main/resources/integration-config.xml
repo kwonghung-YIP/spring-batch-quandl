@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:http="http://www.springframework.org/schema/integration/http"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration https://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/http https://www.springframework.org/schema/integration/http/spring-integration-http.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<int:channel id="http-request-channel">
+	</int:channel>
+
+	<int:channel id="quandl-job-channel">		
+		<int:queue capacity="100"/>
+	</int:channel>
+
+	<int:channel id="http-reply-channel">
+	</int:channel>
+	
+	<http:inbound-gateway path="/trigger" supported-methods="GET"
+		request-channel="http-request-channel"
+		reply-channel="http-reply-channel"
+		request-payload-type="byte[]"
+		request-timeout="1000"
+		reply-timeout="600000"
+	/>
+
+	<int:splitter input-channel="http-request-channel" output-channel="quandl-job-channel" 
+		ref="quandlCallService" method="distributeQuandlRequest">			
+	</int:splitter>
+
+	<int:service-activator input-channel="quandl-job-channel" output-channel="consolid-request-channel"
+		ref="quandlCallService" method="callQuandlApi">
+		<int:poller task-executor="threadPoolTaskExecutor" fixed-rate="500">
+		</int:poller>
+	</int:service-activator>
+
+	<int:aggregator input-channel="consolid-request-channel" output-channel="http-reply-channel" 
+		ref="quandlCallService" method="consolidRequest">
+	</int:aggregator>
+
+</beans>

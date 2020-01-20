@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableBatchProcessing
-@ImportResource("simple-job-config.xml")
+@ImportResource("batch-config.xml")
 public class BatchConfig {
 
 	@Autowired
