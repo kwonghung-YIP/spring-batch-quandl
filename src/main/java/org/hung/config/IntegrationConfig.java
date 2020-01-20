@@ -1,6 +1,8 @@
 package org.hung.config;
 
 import org.hung.integration.QuandlCallService;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.integration.launch.JobLaunchingGateway;
 import org.springframework.boot.task.TaskExecutorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,5 +28,12 @@ public class IntegrationConfig {
 		QuandlCallService service = new QuandlCallService(); 
 		return service;
 	}
+	
+	@Bean	
+	public JobLaunchingGateway jobLaunchGateway(JobLauncher launcher) {
+		JobLaunchingGateway gateway = new JobLaunchingGateway(launcher);
+		return gateway;		
+	}
+
 	
 }
